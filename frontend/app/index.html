@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Research Impact Co-Pilot (RIC)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #2d3748; min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 40px; }
+    header h1 { font-size: 2rem; color: #2b6cb0; }
+    header p { color: #718096; margin-top: 8px; }
+    .card { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 24px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; color: #4a5568; }
+    input, textarea { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 1rem; margin-bottom: 20px; font-family: inherit; }
+    input:focus, textarea:focus { outline: none; border-color: #2b6cb0; }
+    textarea { height: 160px; resize: vertical; }
+    button { width: 100%; padding: 14px; background: #2b6cb0; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+    button:hover { background: #2c5282; }
+    button:disabled { background: #a0aec0; cursor: not-allowed; }
+    #results { display: none; }
+    .score-box { text-align: center; padding: 24px; background: #ebf8ff; border-radius: 10px; margin-bottom: 20px; }
+    .score-number { font-size: 3rem; font-weight: 700; color: #2b6cb0; }
+    .score-label { font-size: 1.2rem; color: #4a5568; margin-top: 4px; }
+    .result-section { margin-bottom: 20px; }
+    .result-section h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #718096; margin-bottom: 10px; }
+    .keyword-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .keyword-tag { background: #bee3f8; color: #2c5282; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; }
+    .suggested-title { background: #f0fff4; border-left: 4px solid #38a169; padding: 14px 16px; border-radius: 0 8px 8px 0; font-style: italic; color: #276749; }
+    .message-box { background: #fffbeb; border-left: 4px solid #d69e2e; padding: 14px 16px; border-radius: 0 8px 8px 0; color: #744210; font-size: 0.95rem; }
+    .error-box { background: #fff5f5; border-left: 4px solid #e53e3e; padding: 14px 16px; border-radius: 0 8px 8px 0; color: #742a2a; display: none; }
+    .loading { text-align: center; color: #718096; display: none; padding-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔬 Research Impact Co-Pilot</h1>
+      <p>Paste your paper title and abstract — get instant impact insights.</p>
+    </header>
+    <div class="card">
+      <label for="title">Paper Title</label>
+      <input type="text" id="title" placeholder="e.g. Enhanced Solubility of Docetaxel Using Cyclodextrin Complexation" />
+      <label for="abstract">Abstract</label>
+      <textarea id="abstract" placeholder="Paste your full abstract here (at least 50 words recommended)..."></textarea>
+      <label for="scholar_url">Google Scholar / ORCID URL (optional)</label>
+      <input type="text" id="scholar_url" placeholder="https://scholar.google.com/citations?user=..." />
+      <div class="error-box" id="error-box">⚠️ <span id="error-msg"></span></div>
+      <button id="analyze-btn" onclick="analyze()">🔍 Analyze Paper</button>
+      <div class="loading" id="loading">Analyzing your paper... ⏳</div>
+    </div>
+    <div class="card" id="results">
+      <div class="score-box">
+        <div class="score-number" id="score-number">—</div>
+        <div class="score-label">Impact Score / 10 &nbsp;·&nbsp; <span id="score-label">—</span></div>
+      </div>
+      <div class="result-section">
+        <h3>📊 Summary</h3>
+        <div class="message-box" id="message-box"></div>
+      </div>
+      <div class="result-section">
+        <h3>🏷️ Top Keywords</h3>
+        <div class="keyword-list" id="keyword-list"></div>
+      </div>
+      <div class="result-section">
+        <h3>✏️ Suggested Title</h3>
+        <div class="suggested-title" id="suggested-title"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    async function analyze() {
+      const title = document.getElementById('title').value.trim();
+      const abstract = document.getElementById('abstract').value.trim();
+      const scholar_url = document.getElementById('scholar_url').value.trim();
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('error-box').style.display = 'none';
+      if (!title) { showError('Please enter a paper title.'); return; }
+      if (!abstract) { showError('Please enter an abstract.'); return; }
+      document.getElementById('analyze-btn').disabled = true;
+      document.getElementById('loading').style.display = 'block';
+      try {
+        const response = await fetch('http://localhost:8000/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, abstract, scholar_url: scholar_url || null })
+        });
+        const data = await response.json();
+        if (!response.ok) { showError(data.detail || 'Something went wrong.'); return; }
+        displayResults(data);
+      } catch (err) {
+        showError('Cannot connect to server. Make sure uvicorn is running on port 8000.');
+      } finally {
+        document.getElementById('analyze-btn').disabled = false;
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+    function displayResults(data) {
+      document.getElementById('score-number').textContent = data.impact_score;
+      document.getElementById('score-label').textContent = data.impact_label + ' Impact';
+      const scoreBox = document.querySelector('.score-box');
+      if (data.impact_label === 'High') scoreBox.style.background = '#f0fff4';
+      else if (data.impact_label === 'Medium') scoreBox.style.background = '#fffbeb';
+      else scoreBox.style.background = '#fff5f5';
+      document.getElementById('message-box').textContent = data.message;
+      const keywordList = document.getElementById('keyword-list');
+      keywordList.innerHTML = '';
+      data.top_keywords.forEach(kw => {
+        const tag = document.createElement('span');
+        tag.className = 'keyword-tag';
+        tag.textContent = kw;
+        keywordList.appendChild(tag);
+      });
+      document.getElementById('suggested-title').textContent = data.suggested_title;
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    }
+    function showError(msg) {
+      document.getElementById('error-msg').textContent = msg;
+      document.getElementById('error-box').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
