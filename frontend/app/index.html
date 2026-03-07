@@ -6,7 +6,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #2d3748; min-height: 100vh; padding: 40px 20px; }
-    .container { max-width: 720px; margin: 0 auto; }
+    .container { max-width: 760px; margin: 0 auto; }
     header { text-align: center; margin-bottom: 40px; }
     header h1 { font-size: 2rem; color: #2b6cb0; }
     header p { color: #718096; margin-top: 8px; }
@@ -38,6 +38,28 @@
     .meta-inst { font-size: 0.9rem; color: #718096; margin-bottom: 16px; }
     .note-box { background: #fffbeb; border-left: 4px solid #d69e2e; padding: 10px 14px; border-radius: 0 8px 8px 0; color: #744210; font-size: 0.9rem; margin-top: 12px; }
     #researcher-section { display: none; }
+    /* Action Pack styles */
+    .action-card { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .action-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .action-number { background: #2b6cb0; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+    .action-title { font-size: 1.1rem; font-weight: 600; color: #2d3748; }
+    .action-description { color: #4a5568; font-size: 0.95rem; margin-bottom: 14px; line-height: 1.6; }
+    .action-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+    .badge-time { background: #e9d8fd; color: #553c9a; }
+    .badge-low { background: #c6f6d5; color: #276749; }
+    .badge-medium { background: #fefcbf; color: #744210; }
+    .badge-high { background: #fed7d7; color: #742a2a; }
+    .badge-confidence { background: #bee3f8; color: #2c5282; }
+    .template-box { background: #f7fafc; border-radius: 8px; padding: 14px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; color: #2d3748; max-height: 200px; overflow-y: auto; }
+    .template-toggle { color: #2b6cb0; font-size: 0.85rem; cursor: pointer; margin-bottom: 8px; display: inline-block; }
+    .print-btn { background: #38a169; margin-top: 8px; }
+    .print-btn:hover { background: #276749; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; padding: 0; }
+      .card { box-shadow: none; border: 1px solid #e2e8f0; }
+    }
   </style>
 </head>
 <body>
@@ -46,18 +68,22 @@
       <h1>🔬 Research Impact Co-Pilot</h1>
       <p>Paste your paper title and abstract — get instant impact insights.</p>
     </header>
-    <div class="card">
+
+    <div class="card no-print">
       <label for="title">Paper Title</label>
       <input type="text" id="title" placeholder="e.g. Enhanced Solubility of Docetaxel Using Cyclodextrin Complexation" />
       <label for="abstract">Abstract</label>
       <textarea id="abstract" placeholder="Paste your full abstract here (at least 50 words recommended)..."></textarea>
       <label for="scholar_url">Your Name or ORCID URL (optional)</label>
-      <input type="text" id="scholar_url" placeholder="e.g. Abdul Haseeb OR https://orcid.org/0000-0000-0000-0000" />
+      <input type="text" id="scholar_url" placeholder="e.g. Abdul Haseeb  OR  https://orcid.org/0000-0000-0000-0000" />
       <div class="error-box" id="error-box">⚠️ <span id="error-msg"></span></div>
       <button id="analyze-btn" onclick="analyze()">🔍 Analyze Paper</button>
       <div class="loading" id="loading">Analyzing your paper... ⏳</div>
     </div>
+
     <div id="results">
+
+      <!-- Paper Score Card -->
       <div class="card">
         <div class="score-box" id="score-box">
           <div class="score-number" id="score-number">—</div>
@@ -76,6 +102,8 @@
           <div class="suggested-title" id="suggested-title"></div>
         </div>
       </div>
+
+      <!-- Researcher Card -->
       <div class="card" id="researcher-section">
         <div class="result-section">
           <h3>👤 Researcher Profile (via OpenAlex)</h3>
@@ -102,20 +130,35 @@
           <div class="note-box" id="meta-note" style="display:none"></div>
         </div>
       </div>
+
+      <!-- Action Pack Card -->
+      <div class="card" id="action-pack-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h2 style="color:#2b6cb0;">⚡ Your Action Pack</h2>
+          <button class="print-btn no-print" onclick="window.print()" style="width:auto; padding:10px 20px; font-size:0.9rem;">🖨️ Print / Save PDF</button>
+        </div>
+        <div id="actions-list"></div>
+      </div>
+
     </div>
   </div>
+
   <script>
     async function analyze() {
       const title = document.getElementById('title').value.trim();
       const abstract = document.getElementById('abstract').value.trim();
       const scholar_url = document.getElementById('scholar_url').value.trim();
+
       document.getElementById('results').style.display = 'none';
       document.getElementById('error-box').style.display = 'none';
       document.getElementById('researcher-section').style.display = 'none';
+
       if (!title) { showError('Please enter a paper title.'); return; }
       if (!abstract) { showError('Please enter an abstract.'); return; }
+
       document.getElementById('analyze-btn').disabled = true;
       document.getElementById('loading').style.display = 'block';
+
       try {
         const response = await fetch('http://localhost:8000/analyze', {
           method: 'POST',
@@ -132,14 +175,18 @@
         document.getElementById('loading').style.display = 'none';
       }
     }
+
     function displayResults(data) {
+      // Score
       document.getElementById('score-number').textContent = data.impact_score;
       document.getElementById('score-label').textContent = data.impact_label + ' Impact';
       const scoreBox = document.getElementById('score-box');
       if (data.impact_label === 'High') scoreBox.style.background = '#f0fff4';
       else if (data.impact_label === 'Medium') scoreBox.style.background = '#fffbeb';
       else scoreBox.style.background = '#fff5f5';
+
       document.getElementById('message-box').textContent = data.message;
+
       const keywordList = document.getElementById('keyword-list');
       keywordList.innerHTML = '';
       data.top_keywords.forEach(kw => {
@@ -148,8 +195,11 @@
         tag.textContent = kw;
         keywordList.appendChild(tag);
       });
+
       document.getElementById('suggested-title').textContent = data.suggested_title;
       document.getElementById('results').style.display = 'block';
+
+      // Researcher
       if (data.researcher) {
         const r = data.researcher;
         document.getElementById('meta-name').textContent = r.name;
@@ -164,8 +214,41 @@
         }
         document.getElementById('researcher-section').style.display = 'block';
       }
+
+      // Action Pack
+      if (data.actions && data.actions.length > 0) {
+        const list = document.getElementById('actions-list');
+        list.innerHTML = '';
+        data.actions.forEach(action => {
+          const diffClass = action.difficulty === 'Low' ? 'badge-low' : action.difficulty === 'Medium' ? 'badge-medium' : 'badge-high';
+          const confClass = action.confidence === 'High' ? 'badge-low' : 'badge-medium';
+          const templateId = 'template-' + action.number;
+          list.innerHTML += `
+            <div class="action-card">
+              <div class="action-header">
+                <div class="action-number">${action.number}</div>
+                <div class="action-title">${action.title}</div>
+              </div>
+              <div class="action-description">${action.description}</div>
+              <div class="action-meta">
+                <span class="badge badge-time">⏱ ${action.time_estimate}</span>
+                <span class="badge ${diffClass}">Difficulty: ${action.difficulty}</span>
+                <span class="badge ${confClass}">Confidence: ${action.confidence}</span>
+              </div>
+              <span class="template-toggle" onclick="toggleTemplate('${templateId}')">▶ Show template / copy text</span>
+              <div id="${templateId}" class="template-box" style="display:none">${action.template}</div>
+            </div>`;
+        });
+      }
+
       document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
     }
+
+    function toggleTemplate(id) {
+      const el = document.getElementById(id);
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
     function showError(msg) {
       document.getElementById('error-msg').textContent = msg;
       document.getElementById('error-box').style.display = 'block';
