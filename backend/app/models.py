@@ -200,3 +200,45 @@ class AnalyzeResponse(BaseModel):
     suggested_title: str
     word_count: int
     message: str
+    # backend/app/models.py
+# -----------------------------------------------
+# Models define the SHAPE of data going in and out
+# of our API. Think of them like forms with fields.
+# Pydantic automatically validates the data for us.
+# -----------------------------------------------
+
+from pydantic import BaseModel
+from typing import Optional, List
+
+
+# --- INPUT MODEL ---
+# This is what the user sends TO our API.
+class AnalyzeRequest(BaseModel):
+    title: str                          # Paper title (required)
+    abstract: str                       # Paper abstract (required)
+    scholar_url: Optional[str] = None   # ORCID URL or researcher name (optional)
+
+
+# --- RESEARCHER METADATA MODEL ---
+# Holds data fetched from OpenAlex about the researcher.
+# Every field is Optional because we may not find them all.
+class ResearcherMetadata(BaseModel):
+    name: str = "Unknown"
+    citation_count: int = 0
+    h_index: int = 0
+    works_count: int = 0
+    institution: str = "Unknown"
+    openalex_id: str = ""
+    note: Optional[str] = None          # Any warning messages
+
+
+# --- OUTPUT MODEL ---
+# This is what our API sends BACK to the user.
+class AnalyzeResponse(BaseModel):
+    impact_score: float                             # A score from 0.0 to 10.0
+    impact_label: str                               # "Low", "Medium", "High"
+    top_keywords: List[str]                         # List of 6 keywords
+    suggested_title: str                            # One improved title
+    word_count: int                                 # Abstract word count
+    message: str                                    # A helpful summary message
+    researcher: Optional[ResearcherMetadata] = None # Fetched metadata (if provided)

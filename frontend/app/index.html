@@ -28,8 +28,16 @@
     .keyword-tag { background: #bee3f8; color: #2c5282; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; }
     .suggested-title { background: #f0fff4; border-left: 4px solid #38a169; padding: 14px 16px; border-radius: 0 8px 8px 0; font-style: italic; color: #276749; }
     .message-box { background: #fffbeb; border-left: 4px solid #d69e2e; padding: 14px 16px; border-radius: 0 8px 8px 0; color: #744210; font-size: 0.95rem; }
-    .error-box { background: #fff5f5; border-left: 4px solid #e53e3e; padding: 14px 16px; border-radius: 0 8px 8px 0; color: #742a2a; display: none; }
+    .error-box { background: #fff5f5; border-left: 4px solid #e53e3e; padding: 14px 16px; border-radius: 0 8px 8px 0; color: #742a2a; display: none; margin-bottom: 16px; }
     .loading { text-align: center; color: #718096; display: none; padding-top: 12px; }
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .meta-item { background: #f7fafc; border-radius: 8px; padding: 14px; text-align: center; }
+    .meta-value { font-size: 1.6rem; font-weight: 700; color: #2b6cb0; }
+    .meta-label { font-size: 0.8rem; color: #718096; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .meta-name { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 4px; }
+    .meta-inst { font-size: 0.9rem; color: #718096; margin-bottom: 16px; }
+    .note-box { background: #fffbeb; border-left: 4px solid #d69e2e; padding: 10px 14px; border-radius: 0 8px 8px 0; color: #744210; font-size: 0.9rem; margin-top: 12px; }
+    #researcher-section { display: none; }
   </style>
 </head>
 <body>
@@ -43,28 +51,56 @@
       <input type="text" id="title" placeholder="e.g. Enhanced Solubility of Docetaxel Using Cyclodextrin Complexation" />
       <label for="abstract">Abstract</label>
       <textarea id="abstract" placeholder="Paste your full abstract here (at least 50 words recommended)..."></textarea>
-      <label for="scholar_url">Google Scholar / ORCID URL (optional)</label>
-      <input type="text" id="scholar_url" placeholder="https://scholar.google.com/citations?user=..." />
+      <label for="scholar_url">Your Name or ORCID URL (optional)</label>
+      <input type="text" id="scholar_url" placeholder="e.g. Abdul Haseeb OR https://orcid.org/0000-0000-0000-0000" />
       <div class="error-box" id="error-box">⚠️ <span id="error-msg"></span></div>
       <button id="analyze-btn" onclick="analyze()">🔍 Analyze Paper</button>
       <div class="loading" id="loading">Analyzing your paper... ⏳</div>
     </div>
-    <div class="card" id="results">
-      <div class="score-box">
-        <div class="score-number" id="score-number">—</div>
-        <div class="score-label">Impact Score / 10 &nbsp;·&nbsp; <span id="score-label">—</span></div>
+    <div id="results">
+      <div class="card">
+        <div class="score-box" id="score-box">
+          <div class="score-number" id="score-number">—</div>
+          <div class="score-label">Impact Score / 10 &nbsp;·&nbsp; <span id="score-label">—</span></div>
+        </div>
+        <div class="result-section">
+          <h3>📊 Summary</h3>
+          <div class="message-box" id="message-box"></div>
+        </div>
+        <div class="result-section">
+          <h3>🏷️ Top Keywords</h3>
+          <div class="keyword-list" id="keyword-list"></div>
+        </div>
+        <div class="result-section">
+          <h3>✏️ Suggested Title</h3>
+          <div class="suggested-title" id="suggested-title"></div>
+        </div>
       </div>
-      <div class="result-section">
-        <h3>📊 Summary</h3>
-        <div class="message-box" id="message-box"></div>
-      </div>
-      <div class="result-section">
-        <h3>🏷️ Top Keywords</h3>
-        <div class="keyword-list" id="keyword-list"></div>
-      </div>
-      <div class="result-section">
-        <h3>✏️ Suggested Title</h3>
-        <div class="suggested-title" id="suggested-title"></div>
+      <div class="card" id="researcher-section">
+        <div class="result-section">
+          <h3>👤 Researcher Profile (via OpenAlex)</h3>
+          <div class="meta-name" id="meta-name"></div>
+          <div class="meta-inst" id="meta-inst"></div>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-value" id="meta-citations">—</div>
+              <div class="meta-label">Total Citations</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-value" id="meta-hindex">—</div>
+              <div class="meta-label">h-index</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-value" id="meta-works">—</div>
+              <div class="meta-label">Total Works</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-value" id="meta-score">—</div>
+              <div class="meta-label">Impact Score</div>
+            </div>
+          </div>
+          <div class="note-box" id="meta-note" style="display:none"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -75,6 +111,7 @@
       const scholar_url = document.getElementById('scholar_url').value.trim();
       document.getElementById('results').style.display = 'none';
       document.getElementById('error-box').style.display = 'none';
+      document.getElementById('researcher-section').style.display = 'none';
       if (!title) { showError('Please enter a paper title.'); return; }
       if (!abstract) { showError('Please enter an abstract.'); return; }
       document.getElementById('analyze-btn').disabled = true;
@@ -98,7 +135,7 @@
     function displayResults(data) {
       document.getElementById('score-number').textContent = data.impact_score;
       document.getElementById('score-label').textContent = data.impact_label + ' Impact';
-      const scoreBox = document.querySelector('.score-box');
+      const scoreBox = document.getElementById('score-box');
       if (data.impact_label === 'High') scoreBox.style.background = '#f0fff4';
       else if (data.impact_label === 'Medium') scoreBox.style.background = '#fffbeb';
       else scoreBox.style.background = '#fff5f5';
@@ -113,6 +150,20 @@
       });
       document.getElementById('suggested-title').textContent = data.suggested_title;
       document.getElementById('results').style.display = 'block';
+      if (data.researcher) {
+        const r = data.researcher;
+        document.getElementById('meta-name').textContent = r.name;
+        document.getElementById('meta-inst').textContent = r.institution;
+        document.getElementById('meta-citations').textContent = r.citation_count.toLocaleString();
+        document.getElementById('meta-hindex').textContent = r.h_index;
+        document.getElementById('meta-works').textContent = r.works_count;
+        document.getElementById('meta-score').textContent = data.impact_score;
+        if (r.note) {
+          document.getElementById('meta-note').textContent = '⚠️ ' + r.note;
+          document.getElementById('meta-note').style.display = 'block';
+        }
+        document.getElementById('researcher-section').style.display = 'block';
+      }
       document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
     }
     function showError(msg) {
