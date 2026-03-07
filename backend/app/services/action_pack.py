@@ -89,7 +89,7 @@ WHERE TO ADD THESE KEYWORDS:
     })
 
     # -----------------------------------------------
-    # ACTION 2: Outreach Email Template
+# ACTION 2: Outreach Email Template
     # Medium effort, high potential reward
     # -----------------------------------------------
     if citation_count < 10:
@@ -102,6 +102,10 @@ WHERE TO ADD THESE KEYWORDS:
         outreach_confidence = "Medium"
         outreach_note = "With your citation base, outreach to international collaborators can open new research directions and cross-citations."
 
+    kw0 = top_keywords[0] if top_keywords else "your research area"
+    kw1 = top_keywords[1] if len(top_keywords) > 1 else "related methodology"
+    kw2 = top_keywords[2] if len(top_keywords) > 2 else "key findings"
+
     actions.append({
         "number": 2,
         "title": "Send 5 Targeted Outreach Emails",
@@ -113,25 +117,80 @@ WHERE TO ADD THESE KEYWORDS:
         "time_estimate": "1-2 hours",
         "difficulty": "Medium",
         "confidence": outreach_confidence,
-        "template": f"""SUBJECT: Quick question about your work on {top_keywords[0] if top_keywords else 'this topic'}
+        "template": f"""THREE EMAIL TEMPLATES — pick the one that fits best:
 
-Dear Dr. [Name],
+──────────────────────────────────────
+TEMPLATE A: The Specific Finding Hook
+(Best when you have contradictory or complementary data)
+──────────────────────────────────────
+SUBJECT: Your work on {kw0} — possible overlap with my findings
 
-I came across your recent work on [{top_keywords[0] if top_keywords else 'related topic'}] and found it highly relevant to my research.
+Dear Dr. [Recipient Name],
 
-I have recently published a paper titled:
-"{title}"
+I recently published a paper titled "{title}" and noticed your work on {kw0} addresses a similar problem from a different angle.
 
-In it, I address [{top_keywords[1] if len(top_keywords) > 1 else 'key findings'}] and believe there may be meaningful overlap with your work on [their topic].
+Specifically, your findings on [{kw1}] caught my attention because our data on {kw2} shows [one specific point of overlap or contrast — fill this in].
 
-I would be grateful if you had a chance to read it. I am also happy to share a preprint if it is behind a paywall.
+I thought you might find our approach to {kw0} useful, or you may see something we missed.
 
-[Link to paper]
+Paper link: [your DOI here]
+
+Happy to discuss if you find it relevant.
 
 Best regards,
-{name}"""
-    })
+{name}
 
+──────────────────────────────────────
+TEMPLATE B: The Resource Offer
+(Best when you have data that complements their work)
+──────────────────────────────────────
+SUBJECT: Data on {kw1} that may complement your {kw0} research
+
+Dear Dr. [Recipient Name],
+
+I have been following your work on {kw0} and wanted to share a paper we recently published that includes {kw1} data you may not have seen.
+
+Title: "{title}"
+
+We found [one sentence on your key result]. This may add context to [specific aspect of their work].
+
+Link: [your DOI here]
+
+No obligation — just thought it might be useful to your group.
+
+Best regards,
+{name}
+
+──────────────────────────────────────
+TEMPLATE C: The Honest Question
+(Best for early-career researchers or rising stars)
+──────────────────────────────────────
+SUBJECT: Quick question from a fellow {kw0} researcher
+
+Dear Dr. [Recipient Name],
+
+I am working on {kw0} and {kw1}, and recently published:
+"{title}"
+
+While writing it, I ran into a challenge around {kw2} that your 20[XX] paper touches on but does not fully resolve — at least not for our system.
+
+How did you handle [specific methodological challenge — fill this in]?
+
+I am happy to share our paper in return. Link: [your DOI here]
+
+Thank you for your time.
+
+Best regards,
+{name}
+
+──────────────────────────────────────
+HOW TO FIND THE RIGHT 5 RESEARCHERS:
+- Search "{kw0} {kw1}" on Google Scholar, sort by date
+- Filter: published in last 2 years, at least 10 citations
+- Avoid: same institution as you, your own co-authors
+- Target: researchers who cited similar papers but not yours yet
+──────────────────────────────────────"""
+    })
     # -----------------------------------------------
     # ACTION 3: Promotion Plan
     # Higher effort, builds long-term visibility

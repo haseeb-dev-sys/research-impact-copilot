@@ -143,7 +143,7 @@
     </div>
   </div>
 
-  <script>
+  <script> window.onload = loadFromLocalStorage;
     async function analyze() {
       const title = document.getElementById('title').value.trim();
       const abstract = document.getElementById('abstract').value.trim();
@@ -168,6 +168,7 @@
         const data = await response.json();
         if (!response.ok) { showError(data.detail || 'Something went wrong.'); return; }
         displayResults(data);
+        saveToLocalStorage(data);
       } catch (err) {
         showError('Cannot connect to server. Make sure uvicorn is running on port 8000.');
       } finally {
@@ -247,6 +248,37 @@
     function toggleTemplate(id) {
       const el = document.getElementById(id);
       el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+function saveToLocalStorage(data) {
+      const saved = {
+        title: document.getElementById('title').value,
+        abstract: document.getElementById('abstract').value,
+        scholar_url: document.getElementById('scholar_url').value,
+        results: data,
+        savedAt: new Date().toLocaleString()
+      };
+      localStorage.setItem('ric_last_analysis', JSON.stringify(saved));
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('ric_last_analysis');
+      if (!saved) return;
+      const data = JSON.parse(saved);
+      document.getElementById('title').value = data.title || '';
+      document.getElementById('abstract').value = data.abstract || '';
+      document.getElementById('scholar_url').value = data.scholar_url || '';
+      if (data.results) {
+        displayResults(data.results);
+        const banner = document.createElement('div');
+        banner.style = 'background:#ebf8ff;border-left:4px solid #2b6cb0;padding:10px 16px;border-radius:0 8px 8px 0;color:#2c5282;font-size:0.9rem;margin-bottom:16px;';
+        banner.innerHTML = `📂 Restored your last analysis from ${data.savedAt}. <span onclick="clearSaved()" style="cursor:pointer;text-decoration:underline;margin-left:8px;">Clear</span>`;
+        document.getElementById('results').prepend(banner);
+      }
+    }
+
+    function clearSaved() {
+      localStorage.removeItem('ric_last_analysis');
+      location.reload();
     }
 
     function showError(msg) {
