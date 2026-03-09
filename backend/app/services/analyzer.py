@@ -85,58 +85,56 @@ def extract_keywords(text: str, top_n: int = 6) -> List[str]:
     return [word for word, count in sorted_words[:top_n]]
 
 
-def calculate_impact_score(title: str, abstract: str) -> float:
+def calculate_impact_score(title: str, abstract: str) -> tuple:
     """
     Calculate a simple heuristic impact score from 0.0 to 10.0.
-
-    This is NOT a real citation predictor — it's a heuristic
-    (a smart estimate) based on known patterns in high-impact papers.
-
-    Scoring factors:
-    - Abstract length (longer = more detailed = slightly better)
-    - Presence of power words (novel, clinical, significant, etc.)
-    - Title length (too short or too long = penalty)
-
-    Args:
-        title: Paper title
-        abstract: Paper abstract
-
-    Returns:
-        A float score between 0.0 and 10.0
+    Returns a tuple of (score, breakdown_dict).
     """
     score = 0.0
+    breakdown = {}
     abstract_lower = abstract.lower()
     title_lower = title.lower()
 
-    # Factor 1: Abstract length (ideal is 150-300 words)
+    # Factor 1: Abstract length
     word_count = len(abstract.split())
     if word_count >= 150:
         score += 2.0
+        breakdown["Abstract Length"] = f"+2.0 ({word_count} words — ideal)"
     elif word_count >= 100:
         score += 1.5
+        breakdown["Abstract Length"] = f"+1.5 ({word_count} words — good)"
     elif word_count >= 50:
         score += 1.0
+        breakdown["Abstract Length"] = f"+1.0 ({word_count} words — short)"
     else:
         score += 0.5
+        breakdown["Abstract Length"] = f"+0.5 ({word_count} words — too short)"
 
-    # Factor 2: Power words in abstract (up to 4 points)
+    # Factor 2: Power words in abstract
     power_word_hits = sum(1 for pw in POWER_WORDS if pw in abstract_lower)
-    score += min(power_word_hits * 0.5, 4.0)
+    abstract_points = round(min(power_word_hits * 0.5, 4.0), 1)
+    score += abstract_points
+    breakdown["Outcome Words in Abstract"] = f"+{abstract_points} ({power_word_hits} words like 'significant', 'novel', 'improved')"
 
-    # Factor 3: Power words in title (up to 2 points)
+    # Factor 3: Power words in title
     title_power_hits = sum(1 for pw in POWER_WORDS if pw in title_lower)
-    score += min(title_power_hits * 0.5, 2.0)
+    title_power_points = round(min(title_power_hits * 0.5, 2.0), 1)
+    score += title_power_points
+    breakdown["Outcome Words in Title"] = f"+{title_power_points} ({title_power_hits} impact words in title)"
 
-    # Factor 4: Title length (ideal is 8-15 words)
+    # Factor 4: Title length
     title_words = len(title.split())
     if 8 <= title_words <= 15:
         score += 2.0
+        breakdown["Title Length"] = f"+2.0 ({title_words} words — ideal length)"
     elif 5 <= title_words <= 20:
         score += 1.0
+        breakdown["Title Length"] = f"+1.0 ({title_words} words — acceptable)"
+    else:
+        breakdown["Title Length"] = f"+0.0 ({title_words} words — too short or too long)"
 
-    # Cap the score at 10.0
-    return round(min(score, 10.0), 1)
-
+    final_score = round(min(score, 10.0), 1)
+    return final_score, breakdown
 
 def get_impact_label(score: float) -> str:
     """

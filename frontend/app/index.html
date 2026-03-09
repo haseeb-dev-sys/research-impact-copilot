@@ -187,6 +187,15 @@
       else scoreBox.style.background = '#fff5f5';
 
       document.getElementById('message-box').textContent = data.message;
+      // Score breakdown
+      if (data.score_breakdown) {
+        let breakdownHtml = '<div style="margin-top:12px;font-size:0.85rem;color:#4a5568;"><strong>How this was calculated:</strong><ul style="margin-top:6px;padding-left:20px;">';
+        for (const [factor, detail] of Object.entries(data.score_breakdown)) {
+          breakdownHtml += `<li style="margin-bottom:4px;"><strong>${factor}:</strong> ${detail}</li>`;
+        }
+        breakdownHtml += '</ul></div>';
+        document.getElementById('message-box').innerHTML += breakdownHtml;
+      }
 
       const keywordList = document.getElementById('keyword-list');
       keywordList.innerHTML = '';

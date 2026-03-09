@@ -10,15 +10,18 @@ from backend.app.services.action_pack import generate_action_pack
 app = FastAPI(title="Research Impact Co-Pilot (RIC)", version="0.3.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+
 @app.get("/hello")
 def hello():
     return {"status": "RIC hello", "version": "0.3", "message": "Haseeb's Research Impact Co-Pilot is live!"}
+
 
 @app.get("/")
 def root():
     return {"app": "Research Impact Co-Pilot", "docs": "/docs"}
 
-@app.post("/analyze", response_model=AnalyzeResponse)
+
+@app.post("/analyze")
 async def analyze_paper(request: AnalyzeRequest):
     if not request.title.strip():
         raise HTTPException(status_code=400, detail="Title cannot be empty.")
@@ -28,7 +31,7 @@ async def analyze_paper(request: AnalyzeRequest):
         raise HTTPException(status_code=400, detail="Abstract is too short.")
 
     keywords = extract_keywords(request.abstract)
-    score = calculate_impact_score(request.title, request.abstract)
+    score, breakdown = calculate_impact_score(request.title, request.abstract)
     label = get_impact_label(score)
     new_title = suggest_title(request.title, keywords)
     word_count = len(request.abstract.split())
@@ -57,14 +60,14 @@ async def analyze_paper(request: AnalyzeRequest):
         f"The abstract contains {word_count} words. "
         f"Top keywords: {', '.join(keywords[:3])}."
     )
-
-    return AnalyzeResponse(
+    response = AnalyzeResponse(
         impact_score=score,
         impact_label=label,
         top_keywords=keywords,
         suggested_title=new_title,
         word_count=word_count,
         message=message,
+        score_breakdown=breakdown,
         researcher=researcher,
         actions=actions
     )
