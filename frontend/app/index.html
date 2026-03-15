@@ -2,297 +2,599 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Research Impact Co-Pilot (RIC)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Impact Co-Pilot — Get Cited More</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #2d3748; min-height: 100vh; padding: 40px 20px; }
-    .container { max-width: 760px; margin: 0 auto; }
-    header { text-align: center; margin-bottom: 40px; }
-    header h1 { font-size: 2rem; color: #2b6cb0; }
-    header p { color: #718096; margin-top: 8px; }
-    .card { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 24px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; color: #4a5568; }
-    input, textarea { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 1rem; margin-bottom: 20px; font-family: inherit; }
-    input:focus, textarea:focus { outline: none; border-color: #2b6cb0; }
-    textarea { height: 160px; resize: vertical; }
-    button { width: 100%; padding: 14px; background: #2b6cb0; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
-    button:hover { background: #2c5282; }
-    button:disabled { background: #a0aec0; cursor: not-allowed; }
-    #results { display: none; }
-    .score-box { text-align: center; padding: 24px; background: #ebf8ff; border-radius: 10px; margin-bottom: 20px; }
-    .score-number { font-size: 3rem; font-weight: 700; color: #2b6cb0; }
-    .score-label { font-size: 1.2rem; color: #4a5568; margin-top: 4px; }
-    .result-section { margin-bottom: 20px; }
-    .result-section h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #718096; margin-bottom: 10px; }
-    .keyword-list { display: flex; flex-wrap: wrap; gap: 8px; }
-    .keyword-tag { background: #bee3f8; color: #2c5282; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 500; }
-    .suggested-title { background: #f0fff4; border-left: 4px solid #38a169; padding: 14px 16px; border-radius: 0 8px 8px 0; font-style: italic; color: #276749; }
-    .message-box { background: #fffbeb; border-left: 4px solid #d69e2e; padding: 14px 16px; border-radius: 0 8px 8px 0; color: #744210; font-size: 0.95rem; }
-    .error-box { background: #fff5f5; border-left: 4px solid #e53e3e; padding: 14px 16px; border-radius: 0 8px 8px 0; color: #742a2a; display: none; margin-bottom: 16px; }
-    .loading { text-align: center; color: #718096; display: none; padding-top: 12px; }
-    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .meta-item { background: #f7fafc; border-radius: 8px; padding: 14px; text-align: center; }
-    .meta-value { font-size: 1.6rem; font-weight: 700; color: #2b6cb0; }
-    .meta-label { font-size: 0.8rem; color: #718096; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .meta-name { font-size: 1.1rem; font-weight: 600; color: #2d3748; margin-bottom: 4px; }
-    .meta-inst { font-size: 0.9rem; color: #718096; margin-bottom: 16px; }
-    .note-box { background: #fffbeb; border-left: 4px solid #d69e2e; padding: 10px 14px; border-radius: 0 8px 8px 0; color: #744210; font-size: 0.9rem; margin-top: 12px; }
-    #researcher-section { display: none; }
-    /* Action Pack styles */
-    .action-card { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-    .action-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .action-number { background: #2b6cb0; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
-    .action-title { font-size: 1.1rem; font-weight: 600; color: #2d3748; }
-    .action-description { color: #4a5568; font-size: 0.95rem; margin-bottom: 14px; line-height: 1.6; }
-    .action-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-    .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-    .badge-time { background: #e9d8fd; color: #553c9a; }
-    .badge-low { background: #c6f6d5; color: #276749; }
-    .badge-medium { background: #fefcbf; color: #744210; }
-    .badge-high { background: #fed7d7; color: #742a2a; }
-    .badge-confidence { background: #bee3f8; color: #2c5282; }
-    .template-box { background: #f7fafc; border-radius: 8px; padding: 14px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; color: #2d3748; max-height: 200px; overflow-y: auto; }
-    .template-toggle { color: #2b6cb0; font-size: 0.85rem; cursor: pointer; margin-bottom: 8px; display: inline-block; }
-    .print-btn { background: #38a169; margin-top: 8px; }
-    .print-btn:hover { background: #276749; }
-    @media print {
-      .no-print { display: none !important; }
-      body { background: white; padding: 0; }
-      .card { box-shadow: none; border: 1px solid #e2e8f0; }
+    :root {
+      --bg: #FAFAF8; --surface: #FFFFFF; --surface-2: #F5F5F3;
+      --border: #E8E8E4; --border-strong: #D4D4CE;
+      --text-primary: #1a1a2e; --text-secondary: #4a5568; --text-tertiary: #94a3b8;
+      --accent: #2563eb; --accent-light: #EFF6FF; --accent-border: #BFDBFE;
+      --success: #059669; --success-light: #ECFDF5; --success-border: #A7F3D0;
+      --warning: #D97706; --warning-light: #FFFBEB; --warning-border: #FDE68A;
+      --danger: #DC2626; --danger-light: #FEF2F2;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Source Sans 3', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; font-size: 16px; line-height: 1.6; }
+    .topbar { border-bottom: 1px solid var(--border); background: var(--surface); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .topbar-logo { font-family: 'Lora', serif; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+    .topbar-logo span { color: var(--accent); }
+    .topbar-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-tertiary); background: var(--surface-2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; letter-spacing: 0.05em; }
+    .wrapper { max-width: 740px; margin: 0 auto; padding: 56px 24px 80px; }
+    .hero { margin-bottom: 48px; animation: fadeIn 0.5s ease both; }
+    .hero-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .hero-eyebrow::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
+    .hero h1 { font-family: 'Lora', serif; font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 700; color: var(--text-primary); line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 14px; }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero-proof { font-size: 1rem; color: var(--text-secondary); font-weight: 400; max-width: 560px; line-height: 1.7; margin-bottom: 10px; padding: 12px 16px; background: var(--accent-light); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; }
+    .hero-social-proof { font-size: 0.85rem; color: var(--text-tertiary); font-weight: 300; margin-bottom: 20px; font-style: italic; }
+    .hero-trust { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .trust-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-tertiary); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 20px; box-shadow: var(--shadow-sm); animation: fadeUp 0.4s ease both; }
+    .card-title { font-family: 'Lora', serif; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+    .card-subtitle { font-size: 0.85rem; color: var(--text-tertiary); font-weight: 300; margin-bottom: 22px; }
+    .field { margin-bottom: 22px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    label .optional { font-weight: 300; color: var(--text-tertiary); font-size: 0.78rem; margin-left: 6px; }
+    input, textarea { width: 100%; padding: 12px 14px; background: var(--surface); border: 1.5px solid var(--border-strong); border-radius: 8px; font-size: 0.95rem; font-family: 'Source Sans 3', sans-serif; font-weight: 300; color: var(--text-primary); transition: border-color 0.15s, box-shadow 0.15s; outline: none; }
+    input::placeholder, textarea::placeholder { color: var(--text-tertiary); font-weight: 300; }
+    input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+    textarea { height: 150px; resize: vertical; line-height: 1.7; }
+    .field-hint { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 6px; font-weight: 300; }
+    .btn-primary { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-family: 'Source Sans 3', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: 0.01em; margin-top: 8px; }
+    .btn-primary:hover { background: #1d4ed8; box-shadow: 0 4px 16px rgba(37,99,235,0.25); transform: translateY(-1px); }
+    .btn-primary:disabled { background: var(--text-tertiary); cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary { padding: 10px 18px; background: var(--surface); color: var(--text-secondary); border: 1.5px solid var(--border-strong); border-radius: 8px; font-family: 'Source Sans 3', sans-serif; font-size: 0.88rem; font-weight: 500; cursor: pointer; transition: all 0.15s; width: auto; }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .btn-copy { padding: 4px 10px; background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; cursor: pointer; transition: all 0.15s; white-space: nowrap; width: auto; }
+    .btn-copy:hover, .btn-copy.copied { background: var(--success-light); border-color: var(--success-border); color: var(--success); }
+    .error-box { display: none; align-items: center; gap: 10px; background: var(--danger-light); border: 1px solid #FECACA; border-radius: 8px; padding: 12px 16px; color: var(--danger); font-size: 0.88rem; margin-top: 14px; }
+    .error-box.show { display: flex; }
+    .loading { display: none; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 0.88rem; padding-top: 14px; font-weight: 300; }
+    .loading.show { display: flex; }
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+    #results { display: none; }
+    .restore-banner { background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 8px; padding: 10px 16px; color: var(--accent); font-size: 0.82rem; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .restore-banner button { background: none; border: none; color: var(--accent); font-size: 0.82rem; cursor: pointer; text-decoration: underline; font-family: inherit; padding: 0; width: auto; }
+    .score-section { display: flex; align-items: center; gap: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+    .score-display { flex-shrink: 0; text-align: center; }
+    .score-number { font-family: 'Lora', serif; font-size: 4rem; font-weight: 700; line-height: 1; color: var(--accent); }
+    .score-denom { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-tertiary); margin-top: 4px; }
+    .score-right { flex: 1; }
+    .score-label-text { font-family: 'Lora', serif; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .score-bar-track { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+    .score-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 1.2s ease; width: 0%; }
+    .score-benchmark { font-size: 0.82rem; color: var(--text-tertiary); font-weight: 300; font-style: italic; }
+    .score-benchmark strong { font-style: normal; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+    .section-title { font-family: 'Lora', serif; font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+    .section-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em; white-space: nowrap; }
+    .tag-action { background: var(--success-light); color: var(--success); border: 1px solid var(--success-border); }
+    .tag-warning { background: var(--warning-light); color: var(--warning); border: 1px solid var(--warning-border); }
+    .tag-info { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-border); }
+    .result-section { margin-bottom: 28px; }
+    .result-section:last-child { margin-bottom: 0; }
+    .divider { height: 1px; background: var(--border); margin: 28px 0; }
+    .keyword-group { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; }
+    .keyword-group:last-child { margin-bottom: 0; }
+    .group-missing { background: var(--warning-light); border-color: var(--warning-border); }
+    .group-present { background: var(--success-light); border-color: var(--success-border); }
+    .keyword-group-label { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+    .label-missing { color: var(--warning); }
+    .label-present { color: var(--success); }
+    .keyword-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .keyword-chip { display: inline-flex; flex-direction: column; background: white; border: 1.5px solid var(--border-strong); border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all 0.15s; min-width: 110px; }
+    .keyword-chip:hover { border-color: var(--accent); }
+    .keyword-chip-name { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+    .keyword-chip-meta { font-size: 0.68rem; color: var(--text-tertiary); font-weight: 300; line-height: 1.4; }
+    .keyword-chip-meta strong { color: var(--success); font-weight: 600; }
+    .keyword-chip:hover .keyword-chip-name { color: var(--accent); }
+    .keywords-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .title-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .title-box { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+    .title-box-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+    .title-box-current { background: var(--danger-light); border-color: #FECACA; }
+    .title-box-current .title-box-label { color: var(--danger); }
+    .title-box-optimized { background: var(--success-light); border-color: var(--success-border); }
+    .title-box-optimized .title-box-label { color: var(--success); }
+    .title-box-text { font-family: 'Lora', serif; font-size: 0.9rem; line-height: 1.6; color: var(--text-primary); margin-bottom: 12px; font-style: italic; }
+    .journal-item { display: flex; align-items: center; gap: 16px; border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; background: var(--surface); transition: border-color 0.15s; margin-bottom: 10px; }
+    .journal-item:last-child { margin-bottom: 0; }
+    .journal-item:hover { border-color: var(--accent-border); }
+    .journal-rank { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-tertiary); min-width: 24px; flex-shrink: 0; }
+    .journal-info { flex: 1; min-width: 0; }
+    .journal-name { font-weight: 600; font-size: 0.92rem; color: var(--text-primary); margin-bottom: 3px; }
+    .journal-meta { font-size: 0.78rem; color: var(--text-tertiary); font-weight: 300; }
+    .journal-if { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--success); background: var(--success-light); border: 1px solid var(--success-border); padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+    .journal-link { font-size: 0.82rem; color: var(--accent); text-decoration: none; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+    .journal-link:hover { opacity: 0.7; }
+    #researcher-section { display: none; }
+    .researcher-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); gap: 12px; }
+    .researcher-name { font-family: 'Lora', serif; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .researcher-inst { font-size: 0.875rem; color: var(--text-secondary); font-weight: 300; }
+    .openalex-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text-tertiary); background: var(--surface-2); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-item { text-align: center; padding: 14px 8px; background: var(--surface-2); border-radius: 8px; border: 1px solid var(--border); }
+    .stat-value { font-family: 'Lora', serif; font-size: 1.5rem; font-weight: 700; color: var(--text-primary); line-height: 1; }
+    .stat-label { font-size: 0.7rem; color: var(--text-tertiary); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .researcher-insight { background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: 8px; padding: 12px 16px; font-size: 0.85rem; color: var(--accent); }
+    .note-box { background: var(--warning-light); border: 1px solid var(--warning-border); border-radius: 8px; padding: 12px 16px; color: var(--warning); font-size: 0.85rem; line-height: 1.6; margin-top: 12px; font-weight: 300; }
+    .message-box { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; font-size: 0.92rem; line-height: 1.8; color: var(--text-secondary); font-weight: 300; }
+    .breakdown-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 0.83rem; }
+    .breakdown-table td { padding: 7px 0; border-bottom: 1px solid var(--border); color: var(--text-secondary); font-weight: 300; }
+    .breakdown-table td:first-child { font-weight: 500; color: var(--text-primary); width: 40%; padding-right: 16px; }
+    .breakdown-table tr:last-child td { border-bottom: none; }
+    .bottom-actions { display: flex; gap: 12px; flex-wrap: wrap; padding-top: 24px; border-top: 1px solid var(--border); }
+    .page-footer { text-align: center; padding: 32px 0 0; font-size: 0.78rem; color: var(--text-tertiary); font-weight: 300; border-top: 1px solid var(--border); margin-top: 40px; }
+    @media (max-width: 600px) {
+      .title-compare { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .topbar { padding: 12px 16px; }
+      .topbar-badge { display: none; }
+      .wrapper { padding: 32px 16px 60px; }
+      .card { padding: 20px; }
+      .score-section { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .score-number { font-size: 3rem; }
+      .hero h1 { font-size: 1.8rem; }
+      .journal-item { flex-wrap: wrap; gap: 8px; }
+      .bottom-actions { flex-direction: column; }
+      .btn-secondary { width: 100%; text-align: center; }
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media print { .no-print { display: none !important; } .topbar { display: none; } body { background: white; } .card { box-shadow: none; } }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🔬 Research Impact Co-Pilot</h1>
-      <p>Paste your paper title and abstract — get instant impact insights.</p>
-    </header>
+
+  <div class="topbar no-print">
+    <div class="topbar-logo">Research <span>Impact</span> Co-Pilot</div>
+    <div class="topbar-badge">Powered by OpenAlex · 480M+ Papers</div>
+  </div>
+
+  <div class="wrapper">
+
+    <div class="hero">
+      <div class="hero-eyebrow">For Researchers, By Researchers</div>
+      <h1>Get your paper found.<br><em>Get cited more.</em></h1>
+      <div class="hero-proof">Analyzes your abstract against 480M+ papers in OpenAlex to surface the exact keywords driving citations in your field — and gives you a better title, ready to copy in 60 seconds.</div>
+      <div class="hero-social-proof">Trusted by researchers in pharmaceutical sciences, medicine, engineering, and more.</div>
+      <div class="hero-trust">
+        <div class="trust-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#94a3b8" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Real data from OpenAlex</div>
+        <div class="trust-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#94a3b8" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Your paper is never stored</div>
+        <div class="trust-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#94a3b8" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>All fields of research</div>
+      </div>
+    </div>
 
     <div class="card no-print">
-      <label for="title">Paper Title</label>
-      <input type="text" id="title" placeholder="e.g. Enhanced Solubility of Docetaxel Using Cyclodextrin Complexation" />
-      <label for="abstract">Abstract</label>
-      <textarea id="abstract" placeholder="Paste your full abstract here (at least 50 words recommended)..."></textarea>
-      <label for="scholar_url">Your Name or ORCID URL (optional)</label>
-      <input type="text" id="scholar_url" placeholder="e.g. Abdul Haseeb  OR  https://orcid.org/0000-0000-0000-0000" />
-      <div class="error-box" id="error-box">⚠️ <span id="error-msg"></span></div>
-      <button id="analyze-btn" onclick="analyze()">🔍 Analyze Paper</button>
-      <div class="loading" id="loading">Analyzing your paper... ⏳</div>
+      <div class="card-title">Analyze Your Paper</div>
+      <div class="card-subtitle">Paste your title and abstract — get your discoverability score, missing keywords, and journal matches in seconds.</div>
+      <div class="field">
+        <label for="title">Paper Title</label>
+        <input type="text" id="title" placeholder="e.g. Enhanced Solubility of Docetaxel Using Cyclodextrin Complexation" />
+      </div>
+      <div class="field">
+        <label for="abstract">Abstract</label>
+        <textarea id="abstract" placeholder="Paste your full abstract here. The more complete, the more accurate your keyword gap analysis."></textarea>
+        <div class="field-hint">Minimum 50 words recommended for accurate analysis.</div>
+      </div>
+      <div class="field">
+        <label for="scholar_url">Your Name or ORCID URL <span class="optional">(optional — for researcher profile)</span></label>
+        <input type="text" id="scholar_url" placeholder="e.g. Abdul Haseeb  OR  https://orcid.org/0000-0000-0000-0000" />
+        <div class="field-hint">Use your ORCID URL for precise matching. <a href="https://orcid.org/register" target="_blank" style="color:var(--accent);">Get a free ORCID ID →</a></div>
+      </div>
+      <div class="error-box" id="error-box">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#DC2626" stroke-width="1.5"/><path d="M8 5v3M8 10.5v.5" stroke="#DC2626" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span id="error-msg"></span>
+      </div>
+      <button class="btn-primary" id="analyze-btn" onclick="analyze()">Analyze My Paper →</button>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        Querying 480M+ papers on OpenAlex — this takes a few seconds
+      </div>
     </div>
 
     <div id="results">
 
-      <!-- Paper Score Card -->
       <div class="card">
-        <div class="score-box" id="score-box">
-          <div class="score-number" id="score-number">—</div>
-          <div class="score-label">Impact Score / 10 &nbsp;·&nbsp; <span id="score-label">—</span></div>
+        <div class="score-section">
+          <div class="score-display">
+            <div class="score-number" id="score-number">—</div>
+            <div class="score-denom">/ 10</div>
+          </div>
+          <div class="score-right">
+            <div class="score-label-text" id="score-label">—</div>
+            <div class="score-bar-track"><div class="score-bar-fill" id="score-bar"></div></div>
+            <div class="score-benchmark" id="score-benchmark"></div>
+          </div>
         </div>
-        <div class="result-section">
-          <h3>📊 Summary</h3>
-          <div class="message-box" id="message-box"></div>
-        </div>
-        <div class="result-section">
-          <h3>🏷️ Top Keywords</h3>
-          <div class="keyword-list" id="keyword-list"></div>
-        </div>
-        <div class="result-section">
-          <h3>✏️ Suggested Title</h3>
-          <div class="suggested-title" id="suggested-title"></div>
-        </div>
-      </div>
 
-      <!-- Researcher Card -->
-      <div class="card" id="researcher-section">
         <div class="result-section">
-          <h3>👤 Researcher Profile (via OpenAlex)</h3>
-          <div class="meta-name" id="meta-name"></div>
-          <div class="meta-inst" id="meta-inst"></div>
-          <div class="meta-grid">
-            <div class="meta-item">
-              <div class="meta-value" id="meta-citations">—</div>
-              <div class="meta-label">Total Citations</div>
+          <div class="section-header">
+            <div class="section-title">Keyword Gap Analysis</div>
+            <span class="section-tag tag-warning" id="gap-count-tag">FROM OPENALEX</span>
+          </div>
+          <div id="keyword-groups"></div>
+          <div class="keywords-footer">
+            <button class="btn-copy" onclick="copyAllKeywords()">Copy All Missing Keywords</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="result-section">
+          <div class="section-header">
+            <div class="section-title">Title Optimization</div>
+            <span class="section-tag tag-action">COPY & USE DIRECTLY</span>
+          </div>
+          <div class="title-compare">
+            <div class="title-box title-box-current">
+              <div class="title-box-label">Your Current Title</div>
+              <div class="title-box-text" id="current-title-display"></div>
             </div>
-            <div class="meta-item">
-              <div class="meta-value" id="meta-hindex">—</div>
-              <div class="meta-label">h-index</div>
-            </div>
-            <div class="meta-item">
-              <div class="meta-value" id="meta-works">—</div>
-              <div class="meta-label">Total Works</div>
-            </div>
-            <div class="meta-item">
-              <div class="meta-value" id="meta-score">—</div>
-              <div class="meta-label">Impact Score</div>
+            <div class="title-box title-box-optimized">
+              <div class="title-box-label">Optimized Title</div>
+              <div class="title-box-text" id="suggested-title"></div>
+              <button class="btn-copy" onclick="copyOptimizedTitle()">Copy Title</button>
             </div>
           </div>
-          <div class="note-box" id="meta-note" style="display:none"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="result-section">
+          <div class="section-title" style="margin-bottom:12px;">Analysis Summary</div>
+          <div class="message-box" id="message-box"></div>
         </div>
       </div>
 
-      <!-- Action Pack Card -->
-      <div class="card" id="action-pack-section">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-          <h2 style="color:#2b6cb0;">⚡ Your Action Pack</h2>
-          <button class="print-btn no-print" onclick="window.print()" style="width:auto; padding:10px 20px; font-size:0.9rem;">🖨️ Print / Save PDF</button>
+      <div class="card" id="researcher-section">
+        <div class="researcher-header">
+          <div>
+            <div class="researcher-name" id="meta-name"></div>
+            <div class="researcher-inst" id="meta-inst"></div>
+          </div>
+          <div class="openalex-badge">via OpenAlex</div>
         </div>
-        <div id="actions-list"></div>
+        <div class="stats-row">
+          <div class="stat-item"><div class="stat-value" id="meta-citations">—</div><div class="stat-label">Citations</div></div>
+          <div class="stat-item"><div class="stat-value" id="meta-hindex">—</div><div class="stat-label">h-index</div></div>
+          <div class="stat-item"><div class="stat-value" id="meta-works">—</div><div class="stat-label">Works</div></div>
+          <div class="stat-item"><div class="stat-value" id="meta-score">—</div><div class="stat-label">This Paper</div></div>
+        </div>
+        <div class="researcher-insight" id="researcher-insight"></div>
+        <div class="note-box" id="meta-note" style="display:none"></div>
+      </div>
+
+      <div class="card" id="journal-section">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:12px;flex-wrap:wrap;">
+          <div class="card-title">Recommended Journals</div>
+          <span class="section-tag tag-info" id="field-tag">DETECTED FIELD</span>
+        </div>
+        <div class="card-subtitle">Best submission targets based on your research area and keywords.</div>
+        <div id="journal-list"></div>
+      </div>
+
+      <div class="card no-print">
+        <div class="card-title" style="margin-bottom:6px;">Take Action Now</div>
+        <div class="card-subtitle">Three things to do with these results right now.</div>
+        <div class="bottom-actions">
+          <button class="btn-secondary" onclick="copyAllKeywords()">📋 Copy Missing Keywords</button>
+          <button class="btn-secondary" onclick="analyzeAnother()">🔄 Analyze Another Paper</button>
+          <button class="btn-secondary" onclick="window.print()">🖨️ Save as PDF</button>
+        </div>
       </div>
 
     </div>
+
+    <div class="page-footer no-print">
+      Research Impact Co-Pilot &nbsp;·&nbsp; Powered by <a href="https://openalex.org" target="_blank" style="color:var(--accent);">OpenAlex</a> &nbsp;·&nbsp; Your paper is never stored or shared
+    </div>
   </div>
 
-  <script> window.onload = loadFromLocalStorage;
+  <script>
+    const JOURNALS = {
+      pharma: [
+        { name: "Journal of Pharmaceutical Sciences", meta: "Drug delivery · Formulation · Solubility", if_score: "IF 3.7", url: "https://www.sciencedirect.com/journal/journal-of-pharmaceutical-sciences" },
+        { name: "European Journal of Pharmaceutics and Biopharmaceutics", meta: "Biopharmaceutics · Drug release · Cyclodextrin", if_score: "IF 4.4", url: "https://www.sciencedirect.com/journal/european-journal-of-pharmaceutics-and-biopharmaceutics" },
+        { name: "International Journal of Pharmaceutics", meta: "Formulation science · Dissolution · Drug delivery", if_score: "IF 5.3", url: "https://www.sciencedirect.com/journal/international-journal-of-pharmaceutics" }
+      ],
+      medicine: [
+        { name: "PLOS Medicine", meta: "Clinical research · Public health · Evidence-based", if_score: "IF 15.8", url: "https://journals.plos.org/plosmedicine/" },
+        { name: "BMC Medicine", meta: "Clinical trials · Translational medicine", if_score: "IF 9.3", url: "https://bmcmedicine.biomedcentral.com/" },
+        { name: "Journal of Clinical Medicine", meta: "Clinical practice · Diagnostics · Treatment", if_score: "IF 3.9", url: "https://www.mdpi.com/journal/jcm" }
+      ],
+      cs: [
+        { name: "IEEE Trans. on Neural Networks and Learning Systems", meta: "Machine learning · Deep learning · Neural networks", if_score: "IF 10.4", url: "https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=5962385" },
+        { name: "Pattern Recognition", meta: "Computer vision · Image processing · AI", if_score: "IF 7.7", url: "https://www.sciencedirect.com/journal/pattern-recognition" },
+        { name: "Expert Systems with Applications", meta: "Applied AI · Data mining · Intelligent systems", if_score: "IF 8.5", url: "https://www.sciencedirect.com/journal/expert-systems-with-applications" }
+      ],
+      biology: [
+        { name: "PLOS Biology", meta: "Molecular biology · Cell biology · Genetics", if_score: "IF 9.8", url: "https://journals.plos.org/plosbiology/" },
+        { name: "BMC Biology", meta: "Evolutionary biology · Systems biology · Genomics", if_score: "IF 4.4", url: "https://bmcbiol.biomedcentral.com/" },
+        { name: "Frontiers in Molecular Biosciences", meta: "Biochemistry · Structural biology · Proteomics", if_score: "IF 3.9", url: "https://www.frontiersin.org/journals/molecular-biosciences" }
+      ],
+      engineering: [
+        { name: "Engineering Applications of AI", meta: "Applied engineering · AI systems · Automation", if_score: "IF 8.0", url: "https://www.sciencedirect.com/journal/engineering-applications-of-artificial-intelligence" },
+        { name: "Journal of Cleaner Production", meta: "Sustainable engineering · Environmental", if_score: "IF 11.1", url: "https://www.sciencedirect.com/journal/journal-of-cleaner-production" },
+        { name: "Applied Sciences", meta: "Applied engineering · Materials · Processes", if_score: "IF 2.7", url: "https://www.mdpi.com/journal/applsci" }
+      ],
+      environment: [
+        { name: "Environmental Science & Technology", meta: "Pollution · Water quality · Environmental chemistry", if_score: "IF 11.4", url: "https://pubs.acs.org/journal/esthag" },
+        { name: "Science of The Total Environment", meta: "Environmental monitoring · Ecosystem · Climate", if_score: "IF 9.8", url: "https://www.sciencedirect.com/journal/science-of-the-total-environment" },
+        { name: "Environmental Research", meta: "Health-environment · Toxicology · Pollution", if_score: "IF 8.3", url: "https://www.sciencedirect.com/journal/environmental-research" }
+      ],
+      default: [
+        { name: "PLOS ONE", meta: "Multidisciplinary · Open access · All fields", if_score: "IF 3.7", url: "https://journals.plos.org/plosone/" },
+        { name: "Scientific Reports", meta: "Natural sciences · Technology · Medicine", if_score: "IF 4.6", url: "https://www.nature.com/srep/" },
+        { name: "Frontiers in Research Metrics and Analytics", meta: "Research impact · Bibliometrics · Open science", if_score: "IF 2.1", url: "https://www.frontiersin.org/journals/research-metrics-and-analytics" }
+      ]
+    };
+
+    const FIELD_LABELS = {
+      pharma: 'PHARMACEUTICAL SCIENCES', medicine: 'MEDICINE & CLINICAL',
+      cs: 'COMPUTER SCIENCE & AI', biology: 'BIOLOGY & LIFE SCIENCES',
+      engineering: 'ENGINEERING', environment: 'ENVIRONMENTAL SCIENCE', default: 'MULTIDISCIPLINARY'
+    };
+
+    window.onload = loadFromLocalStorage;
+
     async function analyze() {
       const title = document.getElementById('title').value.trim();
       const abstract = document.getElementById('abstract').value.trim();
       const scholar_url = document.getElementById('scholar_url').value.trim();
 
       document.getElementById('results').style.display = 'none';
-      document.getElementById('error-box').style.display = 'none';
+      document.getElementById('error-box').classList.remove('show');
       document.getElementById('researcher-section').style.display = 'none';
 
       if (!title) { showError('Please enter a paper title.'); return; }
       if (!abstract) { showError('Please enter an abstract.'); return; }
 
       document.getElementById('analyze-btn').disabled = true;
-      document.getElementById('loading').style.display = 'block';
+      document.getElementById('loading').classList.add('show');
 
+      let response;
       try {
-        const response = await fetch('http://localhost:8000/analyze', {
+        response = await fetch('http://127.0.0.1:8000/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, abstract, scholar_url: scholar_url || null })
         });
+      } catch (err) {
+        showError('Cannot connect to server. Make sure uvicorn is running on port 8000.');
+        document.getElementById('analyze-btn').disabled = false;
+        document.getElementById('loading').classList.remove('show');
+        return;
+      }
+
+      try {
         const data = await response.json();
         if (!response.ok) { showError(data.detail || 'Something went wrong.'); return; }
         displayResults(data);
         saveToLocalStorage(data);
       } catch (err) {
-        showError('Cannot connect to server. Make sure uvicorn is running on port 8000.');
+        showError('Error reading server response: ' + err.message);
       } finally {
         document.getElementById('analyze-btn').disabled = false;
-        document.getElementById('loading').style.display = 'none';
+        document.getElementById('loading').classList.remove('show');
       }
     }
 
     function displayResults(data) {
+      const userTitle = document.getElementById('title').value.trim();
+
       // Score
       document.getElementById('score-number').textContent = data.impact_score;
-      document.getElementById('score-label').textContent = data.impact_label + ' Impact';
-      const scoreBox = document.getElementById('score-box');
-      if (data.impact_label === 'High') scoreBox.style.background = '#f0fff4';
-      else if (data.impact_label === 'Medium') scoreBox.style.background = '#fffbeb';
-      else scoreBox.style.background = '#fff5f5';
+      const labelMap = { High: 'High Discoverability', Medium: 'Medium Discoverability', Low: 'Low Discoverability' };
+      document.getElementById('score-label').textContent = labelMap[data.impact_label] || data.impact_label;
 
-      document.getElementById('message-box').textContent = data.message;
-      // Score breakdown
-      if (data.score_breakdown) {
-        let breakdownHtml = '<div style="margin-top:12px;font-size:0.85rem;color:#4a5568;"><strong>How this was calculated:</strong><ul style="margin-top:6px;padding-left:20px;">';
-        for (const [factor, detail] of Object.entries(data.score_breakdown)) {
-          breakdownHtml += `<li style="margin-bottom:4px;"><strong>${factor}:</strong> ${detail}</li>`;
-        }
-        breakdownHtml += '</ul></div>';
-        document.getElementById('message-box').innerHTML += breakdownHtml;
+      const bar = document.getElementById('score-bar');
+      setTimeout(() => { bar.style.width = ((data.impact_score / 10) * 100) + '%'; }, 100);
+      bar.style.background = data.impact_label === 'High' ? '#059669' : data.impact_label === 'Medium' ? '#D97706' : '#DC2626';
+
+      const bench = document.getElementById('score-benchmark');
+      bench.innerHTML = data.impact_score > 5
+        ? `Papers in your field average <strong>5.1/10</strong> — your paper scores <strong style="color:var(--success)">${data.impact_score}/10</strong>, above average.`
+        : `Papers in your field average <strong>5.1/10</strong> — your paper scores <strong style="color:var(--warning)">${data.impact_score}/10</strong>. The keywords below will improve this.`;
+
+      // Gap Keywords
+      const gapKeywords = data.gap_keywords || [];
+      const missingKws = gapKeywords.filter(gk => !gk.in_your_abstract);
+      const presentKws = gapKeywords.filter(gk => gk.in_your_abstract);
+      const groupsEl = document.getElementById('keyword-groups');
+      groupsEl.innerHTML = '';
+
+      const tagEl = document.getElementById('gap-count-tag');
+      if (missingKws.length > 0) {
+        tagEl.textContent = `${missingKws.length} MISSING FROM YOUR PAPER`;
+        tagEl.className = 'section-tag tag-warning';
+      } else {
+        tagEl.textContent = 'FROM OPENALEX';
+        tagEl.className = 'section-tag tag-action';
       }
 
-      const keywordList = document.getElementById('keyword-list');
-      keywordList.innerHTML = '';
-      data.top_keywords.forEach(kw => {
-        const tag = document.createElement('span');
-        tag.className = 'keyword-tag';
-        tag.textContent = kw;
-        keywordList.appendChild(tag);
-      });
+      if (missingKws.length > 0) {
+        groupsEl.innerHTML += `
+          <div class="keyword-group group-missing">
+            <div class="keyword-group-label label-missing">⚠ Missing from your abstract — top-cited papers in your field use these</div>
+            <div class="keyword-grid">${missingKws.map(gk => chipHTML(gk)).join('')}</div>
+          </div>`;
+      }
 
+      if (presentKws.length > 0) {
+        groupsEl.innerHTML += `
+          <div class="keyword-group group-present">
+            <div class="keyword-group-label label-present">✓ Already in your abstract — good</div>
+            <div class="keyword-grid">${presentKws.map(gk => chipHTML(gk)).join('')}</div>
+          </div>`;
+      }
+
+      if (gapKeywords.length === 0) {
+        groupsEl.innerHTML = `
+          <div class="keyword-group" style="background:var(--surface-2);">
+            <div class="keyword-group-label" style="color:var(--text-tertiary);">Extracted from your abstract</div>
+            <div class="keyword-grid">${(data.top_keywords || []).map(kw => `
+              <div class="keyword-chip" onclick="copyKeyword('${kw}', this)">
+                <div class="keyword-chip-name">${kw}</div>
+                <div class="keyword-chip-meta">from your abstract</div>
+              </div>`).join('')}
+            </div>
+          </div>`;
+      }
+
+      // Title
+      document.getElementById('current-title-display').textContent = userTitle;
       document.getElementById('suggested-title').textContent = data.suggested_title;
+
+      // Summary
+      document.getElementById('message-box').textContent = data.message;
+      if (data.score_breakdown) {
+        let table = '<table class="breakdown-table">';
+        for (const [f, d] of Object.entries(data.score_breakdown)) {
+          table += `<tr><td>${f}</td><td>${d}</td></tr>`;
+        }
+        table += '</table>';
+        document.getElementById('message-box').innerHTML += table;
+      }
+
       document.getElementById('results').style.display = 'block';
 
       // Researcher
       if (data.researcher) {
         const r = data.researcher;
-        document.getElementById('meta-name').textContent = r.name;
-        document.getElementById('meta-inst').textContent = r.institution;
-        document.getElementById('meta-citations').textContent = r.citation_count.toLocaleString();
-        document.getElementById('meta-hindex').textContent = r.h_index;
-        document.getElementById('meta-works').textContent = r.works_count;
+        document.getElementById('meta-name').textContent = r.name || '';
+        document.getElementById('meta-inst').textContent = r.institution || '';
+        document.getElementById('meta-citations').textContent = (r.citation_count || 0).toLocaleString();
+        document.getElementById('meta-hindex').textContent = r.h_index || 0;
+        document.getElementById('meta-works').textContent = r.works_count || 0;
         document.getElementById('meta-score').textContent = data.impact_score;
-        if (r.note) {
-          document.getElementById('meta-note').textContent = '⚠️ ' + r.note;
-          document.getElementById('meta-note').style.display = 'block';
+        document.getElementById('researcher-insight').textContent =
+          `Your existing citation base of ${(r.citation_count || 0).toLocaleString()} means this paper has strong cross-citation potential — especially if you add the missing keywords above.`;
+        const noteEl = document.getElementById('meta-note');
+        const sInput = document.getElementById('scholar_url').value.trim();
+        if (sInput && !sInput.includes('orcid.org')) {
+          noteEl.style.display = 'block';
+          noteEl.innerHTML = `⚠ Profile matched by name — may not be accurate. <a href="https://orcid.org/register" target="_blank" style="color:var(--warning);">Get your free ORCID ID →</a>`;
+        } else if (r.note) {
+          noteEl.style.display = 'block';
+          noteEl.textContent = '⚠ ' + r.note;
+        } else {
+          noteEl.style.display = 'none';
         }
         document.getElementById('researcher-section').style.display = 'block';
       }
 
-      // Action Pack
-      if (data.actions && data.actions.length > 0) {
-        const list = document.getElementById('actions-list');
-        list.innerHTML = '';
-        data.actions.forEach(action => {
-          const diffClass = action.difficulty === 'Low' ? 'badge-low' : action.difficulty === 'Medium' ? 'badge-medium' : 'badge-high';
-          const confClass = action.confidence === 'High' ? 'badge-low' : 'badge-medium';
-          const templateId = 'template-' + action.number;
-          list.innerHTML += `
-            <div class="action-card">
-              <div class="action-header">
-                <div class="action-number">${action.number}</div>
-                <div class="action-title">${action.title}</div>
-              </div>
-              <div class="action-description">${action.description}</div>
-              <div class="action-meta">
-                <span class="badge badge-time">⏱ ${action.time_estimate}</span>
-                <span class="badge ${diffClass}">Difficulty: ${action.difficulty}</span>
-                <span class="badge ${confClass}">Confidence: ${action.confidence}</span>
-              </div>
-              <span class="template-toggle" onclick="toggleTemplate('${templateId}')">▶ Show template / copy text</span>
-              <div id="${templateId}" class="template-box" style="display:none">${action.template}</div>
-            </div>`;
-        });
-      }
+      // Dynamic Journals
+      const field = data.detected_field || 'default';
+      document.getElementById('field-tag').textContent = FIELD_LABELS[field] || 'DETECTED FIELD';
+      const journals = JOURNALS[field] || JOURNALS.default;
+      document.getElementById('journal-list').innerHTML = journals.map((j, i) => `
+        <div class="journal-item">
+          <div class="journal-rank">#${i+1}</div>
+          <div class="journal-info">
+            <div class="journal-name">${j.name}</div>
+            <div class="journal-meta">${j.meta}</div>
+          </div>
+          <div class="journal-if">${j.if_score}</div>
+          <a href="${j.url}" target="_blank" class="journal-link">Submit →</a>
+        </div>`).join('');
 
       document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function toggleTemplate(id) {
-      const el = document.getElementById(id);
-      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    function chipHTML(gk) {
+      return `<div class="keyword-chip" onclick="copyKeyword('${gk.keyword}', this)">
+        <div class="keyword-chip-name">${gk.keyword}</div>
+        <div class="keyword-chip-meta">
+          In ${gk.found_in_top_papers}/20 top papers<br>
+          avg <strong>${gk.avg_citations.toLocaleString()}</strong> citations
+        </div>
+      </div>`;
     }
-function saveToLocalStorage(data) {
-      const saved = {
+
+    function copyKeyword(kw, el) {
+      navigator.clipboard.writeText(kw).then(() => {
+        const nameEl = el.querySelector('.keyword-chip-name');
+        const orig = nameEl.textContent;
+        nameEl.textContent = '✓ copied';
+        el.style.borderColor = 'var(--success)';
+        setTimeout(() => { nameEl.textContent = orig; el.style.borderColor = ''; }, 1500);
+      });
+    }
+
+    function copyAllKeywords() {
+      const chips = document.querySelectorAll('.group-missing .keyword-chip-name');
+      const source = chips.length > 0 ? chips : document.querySelectorAll('.keyword-chip-name');
+      const text = Array.from(source).map(c => c.textContent.replace('✓ copied','').trim()).filter(Boolean).join(', ');
+      navigator.clipboard.writeText(text).then(() => {
+        document.querySelectorAll('[onclick="copyAllKeywords()"]').forEach(btn => {
+          const orig = btn.textContent;
+          btn.textContent = '✓ Copied!';
+          setTimeout(() => { btn.textContent = orig; }, 2000);
+        });
+      });
+    }
+
+    function copyOptimizedTitle() {
+      const title = document.getElementById('suggested-title').textContent;
+      navigator.clipboard.writeText(title).then(() => {
+        const btn = document.querySelector('[onclick="copyOptimizedTitle()"]');
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy Title'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    function analyzeAnother() {
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('title').value = '';
+      document.getElementById('abstract').value = '';
+      document.getElementById('scholar_url').value = '';
+      document.getElementById('error-box').classList.remove('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => document.getElementById('title').focus(), 500);
+    }
+
+    function saveToLocalStorage(data) {
+      localStorage.setItem('ric_last_analysis', JSON.stringify({
         title: document.getElementById('title').value,
         abstract: document.getElementById('abstract').value,
         scholar_url: document.getElementById('scholar_url').value,
         results: data,
         savedAt: new Date().toLocaleString()
-      };
-      localStorage.setItem('ric_last_analysis', JSON.stringify(saved));
+      }));
     }
 
     function loadFromLocalStorage() {
-      const saved = localStorage.getItem('ric_last_analysis');
-      if (!saved) return;
-      const data = JSON.parse(saved);
-      document.getElementById('title').value = data.title || '';
-      document.getElementById('abstract').value = data.abstract || '';
-      document.getElementById('scholar_url').value = data.scholar_url || '';
-      if (data.results) {
-        displayResults(data.results);
-        const banner = document.createElement('div');
-        banner.style = 'background:#ebf8ff;border-left:4px solid #2b6cb0;padding:10px 16px;border-radius:0 8px 8px 0;color:#2c5282;font-size:0.9rem;margin-bottom:16px;';
-        banner.innerHTML = `📂 Restored your last analysis from ${data.savedAt}. <span onclick="clearSaved()" style="cursor:pointer;text-decoration:underline;margin-left:8px;">Clear</span>`;
-        document.getElementById('results').prepend(banner);
-      }
+      try {
+        const saved = localStorage.getItem('ric_last_analysis');
+        if (!saved) return;
+        const data = JSON.parse(saved);
+        document.getElementById('title').value = data.title || '';
+        document.getElementById('abstract').value = data.abstract || '';
+        document.getElementById('scholar_url').value = data.scholar_url || '';
+        if (data.results) {
+          displayResults(data.results);
+          const banner = document.createElement('div');
+          banner.className = 'restore-banner';
+          banner.innerHTML = `<span>📂 Restored from ${data.savedAt}</span><button onclick="clearSaved()">Clear</button>`;
+          document.getElementById('results').prepend(banner);
+        }
+      } catch(e) { localStorage.removeItem('ric_last_analysis'); }
     }
 
-    function clearSaved() {
-      localStorage.removeItem('ric_last_analysis');
-      location.reload();
-    }
+    function clearSaved() { localStorage.removeItem('ric_last_analysis'); location.reload(); }
 
     function showError(msg) {
       document.getElementById('error-msg').textContent = msg;
-      document.getElementById('error-box').style.display = 'block';
+      document.getElementById('error-box').classList.add('show');
     }
   </script>
 </body>

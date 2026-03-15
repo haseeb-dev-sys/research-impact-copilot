@@ -29,10 +29,23 @@ class Action(BaseModel):
     template: str
 
 
+class GapKeyword(BaseModel):
+    """
+    A keyword found in top-cited papers in the user's field.
+    in_your_abstract = False means it's MISSING from their paper — that's the gold.
+    """
+    keyword: str
+    avg_citations: int          # Average citations of papers containing this keyword
+    found_in_top_papers: int    # How many of the top 20 papers contain this keyword
+    in_your_abstract: bool      # Is this keyword already in their abstract?
+
+
 class AnalyzeResponse(BaseModel):
     impact_score: float
     impact_label: str
     top_keywords: List[str]
+    gap_keywords: Optional[List[GapKeyword]] = None   # NEW — real citation-backed keywords
+    detected_field: Optional[str] = None              # NEW — pharma / cs / medicine / etc
     suggested_title: str
     word_count: int
     message: str
