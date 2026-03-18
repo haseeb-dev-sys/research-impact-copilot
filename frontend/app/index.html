@@ -401,8 +401,8 @@
 
       const bench = document.getElementById('score-benchmark');
       bench.innerHTML = data.impact_score > 5
-        ? `Papers in your field average <strong>5.1/10</strong> — your paper scores <strong style="color:var(--success)">${data.impact_score}/10</strong>, above average.`
-        : `Papers in your field average <strong>5.1/10</strong> — your paper scores <strong style="color:var(--warning)">${data.impact_score}/10</strong>. The keywords below will improve this.`;
+        ? `Keyword density baseline: <strong>5.0/10</strong> <span style="font-size:0.75rem;color:var(--text-tertiary);" title="Based on keyword density patterns across top-cited papers">ⓘ</span> — your paper scores <strong style="color:var(--success)">${data.impact_score}/10</strong>, above baseline.`
+        : `Keyword density baseline: <strong>5.0/10</strong> <span style="font-size:0.75rem;color:var(--text-tertiary);" title="Based on keyword density patterns across top-cited papers">ⓘ</span> — your paper scores <strong style="color:var(--warning)">${data.impact_score}/10</strong>. The keywords below will improve this.`;
 
       // Gap Keywords
       const gapKeywords = data.gap_keywords || [];
